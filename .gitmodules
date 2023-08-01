@@ -1,0 +1,42 @@
+[submodule "guava-base"]
+	path = guava-base
+	url = https://github.com/bowbahdoe/guava-base
+[submodule "guava-primitives"]
+	path = guava-primitives
+	url = https://github.com/bowbahdoe/guava-primitives
+[submodule "guava-escape"]
+	path = guava-escape
+	url = https://github.com/bowbahdoe/guava-escape
+[submodule "guava-html"]
+	path = guava-html
+	url = https://github.com/bowbahdoe/guava-html
+[submodule "guava-xml"]
+	path = guava-xml
+	url = https://github.com/bowbahdoe/guava-xml
+[submodule "guava-math"]
+	path = guava-math
+	url = https://github.com/bowbahdoe/guava-math
+[submodule "guava-hash"]
+	path = guava-hash
+	url = https://github.com/bowbahdoe/guava-hash
+[submodule "guava-collect"]
+	path = guava-collect
+	url = https://github.com/bowbahdoe/guava-collect
+[submodule "guava-graph"]
+	path = guava-graph
+	url = https://github.com/bowbahdoe/guava-graph
+[submodule "guava-concurrent"]
+	path = guava-concurrent
+	url = https://github.com/bowbahdoe/guava-concurrent
+[submodule "guava-io"]
+	path = guava-io
+	url = https://github.com/bowbahdoe/guava-io
+[submodule "guava-net"]
+	path = guava-net
+	url = https://github.com/bowbahdoe/guava-net
+[submodule "guava-reflect"]
+	path = guava-reflect
+	url = https://github.com/bowbahdoe/guava-reflect
+[submodule "guava"]
+	path = guava
+	url = https://github.com/bowbahdoe/guava
