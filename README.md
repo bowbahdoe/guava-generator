@@ -9,6 +9,8 @@ This is a collection of python scripts which serve the purpose of mechanically r
 - `compile.py` will attempt to run `mvn compile` for each submodule
 - `generate.py` will update the code of all of the submodules to the given commit hash of guava
 
+Consult the repos for the subprojects for the latest releases and dependency information.
+
 * [dev.mccue.guava](https://github.com/bowbahdoe/guava)
 * [dev.mccue.guava.base](https://github.com/bowbahdoe/guava-base)
 * [dev.mccue.guava.primitives](https://github.com/bowbahdoe/guava-primitives)
@@ -53,31 +55,3 @@ This is a collection of python scripts which serve the purpose of mechanically r
   * `com.google.common.cache` ([Caffiene](https://github.com/ben-manes/caffeine) covers that use.)
   * `com.google.common.annotations` (Only `@Beta` and `@VisibleForTesting` would be relevant without GWT+etc. testing, and you can make your own pretty easily.)
 * Compiled for Java 9+, not Java 8
-
-## Why
-
-* It [doesn't seem like guava will be modularized any time soon](https://github.com/google/guava/issues/2970#issuecomment-1572148291)
-* I want to enable more libraries to be fully modular so that the `jlink`
-workflow is more viable
-
-## Why Not
-
-
-* Does not include any android specific code. Equivalent to the `-jre` build.
-* Compiled for Java 9+, not Java 8
-
-## Usage
-
-For the most part, you should be able to just find+replace all
-references to `com.google.common` with `dev.mccue.guava`.
-
-Consult the [original documentation](https://github.com/google/guava) for
-in-depth usage guides.
-
-```xml
-<dependency>
-    <groupId>dev.mccue</groupId>
-    <artifactId>guava-xml</artifactId>
-    <version>0.0.3</version>
-</dependency>
-```
