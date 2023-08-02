@@ -45,6 +45,8 @@ Consult the repos for the subprojects for the latest releases and dependency inf
 * All usages of `java.util.logging.Logger` were replaced with `java.lang.System.Logger`
     * With this change, the only JDK module depended on is `java.base`.
 * All usages of `javax.annotation.*` classes from `com.google.code.findbugs/jsr305` are replaced with equivalent classes from `dev.mccue/jsr305`
+* `FinalizableReferenceQueue` and associated classes were removed
+    * They were rarely used, probably do a job better done by a `Cleaner`, and I wasn't able to validate that they would behave correctly in a module
 * Annotation modules are used via `requires static` and are not carried over to dependents.
 * All annotation usages from `com.google.common.annotations` and `com.google.j2objc.annotations` have been removed
 
