@@ -9,6 +9,8 @@ This is a collection of python scripts which serve the purpose of mechanically r
 - `compile.py` will attempt to run `mvn compile` for each submodule
 - `generate.py` will update the code of all of the submodules to the given commit hash of guava
 
+## Usage
+
 Consult the repos for the subprojects for the latest releases and dependency information.
 
 * [dev.mccue.guava](https://github.com/bowbahdoe/guava)
