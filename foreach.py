@@ -27,3 +27,10 @@ for module in modules:
     os.chdir(cwd + f"/guava-{module}")
     os.system(cmd)
     os.chdir(cwd)
+
+print("------------------------------")
+print(f"guava")
+print("------------------------------")
+os.chdir(cwd + f"/guava")
+os.system(cmd)
+os.chdir(cwd)
