@@ -49,8 +49,6 @@ Consult the repos for the subprojects for the latest releases and dependency inf
     * They were rarely used, probably do a job better done by a `Cleaner`, and I wasn't able to validate that they would behave correctly in a module
 * Annotation modules are used via `requires static` and are not carried over to dependents.
 * All annotation usages from `com.google.common.annotations` and `com.google.j2objc.annotations` have been removed
-
-
 * Split into multiple submodules, each with their own `module-info.java`
 * Drops explicit support for GWT, j2objc, j2cl, etc.
 * Drops explicit support for android (equivalent to the `-jre` build)
