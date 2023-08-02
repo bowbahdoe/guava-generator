@@ -1089,12 +1089,14 @@ def process_FileBackedOutputStream(contents):
 for module in modules:
     os.system(f"rm -rf guava-{module}/src/dev || true")
 
-commit_hash = "36942e30fae35ff9cfca73b68bb3312b188bf01e" # input("Guava commit hash: ")
+# commit_hash = "36942e30fae35ff9cfca73b68bb3312b188bf01e"
+commit_hash = input("Guava commit hash: ")
 
 os.system(f"git clone https://github.com/google/guava guava-source")
 
 working_dir = os.getcwd()
 os.chdir(working_dir + f"/guava-source") 
+os.system("git fetch")
 os.system(f"git checkout {commit_hash}")
 os.chdir(working_dir)
 
