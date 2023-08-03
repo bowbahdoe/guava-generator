@@ -23,3 +23,8 @@ for module in modules:
     os.system("git fetch")
     os.system("git reset --hard origin/main")
     os.chdir(cwd)
+
+os.chdir(cwd + f"/guava")
+os.system("git fetch")
+os.system("git reset --hard origin/main")
+os.chdir(cwd)
