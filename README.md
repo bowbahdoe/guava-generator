@@ -58,3 +58,8 @@ Consult the repos for the subprojects for the latest releases and dependency inf
   * `com.google.common.cache` ([Caffiene](https://github.com/ben-manes/caffeine) covers that use.)
   * `com.google.common.annotations` (Only `@Beta` and `@VisibleForTesting` would be relevant without GWT+etc. testing, and you can make your own pretty easily.)
 * Compiled for Java 9+, not Java 8
+
+## Graph 
+
+![Graph of dependencies](https://github.com/bowbahdoe/guava-generator/assets/5004262/6abfda23-1a05-4a51-8927-ff98edf2156a)
+
