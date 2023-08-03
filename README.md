@@ -61,5 +61,6 @@ Consult the repos for the subprojects for the latest releases and dependency inf
 
 ## Graph 
 
-![Graph of dependencies](https://github.com/bowbahdoe/guava-generator/assets/5004262/6abfda23-1a05-4a51-8927-ff98edf2156a)
+![Graph of dependencies](https://github.com/bowbahdoe/guava-generator/assets/5004262/aa4b97c0-032b-4f1d-933e-738b065c3b7e)
+
 
