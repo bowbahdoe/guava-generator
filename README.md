@@ -8,6 +8,7 @@ This is a collection of python scripts which serve the purpose of mechanically r
 - `foreach.py` will run a command for each submodule
 - `compile.py` will attempt to run `mvn compile` for each submodule
 - `generate.py` will update the code of all of the submodules to the given commit hash of guava
+- `commit.py` will push changes to remote repos
 
 ## Usage
 
