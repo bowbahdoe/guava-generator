@@ -82,6 +82,7 @@ def process_LittleEndianByteArray(contents):
      *
      * @return an Unsafe instance if successful
      */
+    @SuppressWarnings("removal") // b/318391980
     private static Unsafe getUnsafe() {
       try {
         return Unsafe.getUnsafe();
@@ -160,7 +161,7 @@ def process_AbstractFuture(contents):
    * <p>Static initialization of this class will fail if the {@link sun.misc.Unsafe} object cannot
    * be accessed.
    */
-  @SuppressWarnings("sunapi")
+  @SuppressWarnings({"sunapi", "removal"}) // b/318391980
   private static final class UnsafeAtomicHelper extends AtomicHelper {
     static final sun.misc.Unsafe UNSAFE;
     static final long LISTENERS_OFFSET;
@@ -205,8 +206,6 @@ def process_AbstractFuture(contents):
         UNSAFE = unsafe;
       } catch (NoSuchFieldException e) {
         throw new RuntimeException(e);
-      } catch (RuntimeException e) {
-        throw e;
       }
     }
 
@@ -264,7 +263,7 @@ def process_AbstractFuture(contents):
 
     try {
       helper = new UnsafeAtomicHelper();
-    } catch (RuntimeException | Error unsafeFailure) {
+    } catch (Exception | Error unsafeFailure) { // sneaky checked exception
       thrownUnsafeFailure = unsafeFailure;
       // catch absolutely everything and fall through to our 'SafeAtomicHelper'
       // The access control checks that ARFU does means the caller class has to be AbstractFuture
@@ -277,7 +276,8 @@ def process_AbstractFuture(contents):
                 newUpdater(AbstractFuture.class, Waiter.class, "waiters"),
                 newUpdater(AbstractFuture.class, Listener.class, "listeners"),
                 newUpdater(AbstractFuture.class, Object.class, "value"));
-      } catch (RuntimeException | Error atomicReferenceFieldUpdaterFailure) {
+      } catch (Exception // sneaky checked exception
+          | Error atomicReferenceFieldUpdaterFailure) {
         // Some Android 5.0.x Samsung devices have bugs in JDK reflection APIs that cause
         // getDeclaredField to throw a NoSuchFieldException when the field is definitely there.
         // For these users fallback to a suboptimal implementation, based on synchronized. This will
@@ -296,9 +296,12 @@ def process_AbstractFuture(contents):
     // Log after all static init is finished; if an installed logger uses any Futures methods, it
     // shouldn't break in cases where reflection is missing/broken.
     if (thrownAtomicReferenceFieldUpdaterFailure != null) {
-      log.log(Level.SEVERE, "UnsafeAtomicHelper is broken!", thrownUnsafeFailure);
-      log.log(
-          Level.SEVERE, "SafeAtomicHelper is broken!", thrownAtomicReferenceFieldUpdaterFailure);
+      log.get().log(Level.SEVERE, "UnsafeAtomicHelper is broken!", thrownUnsafeFailure);
+      log.get()
+          .log(
+              Level.SEVERE,
+              "SafeAtomicHelper is broken!",
+              thrownAtomicReferenceFieldUpdaterFailure);
     }
   }
 """
@@ -353,7 +356,7 @@ def process_UnsignedBytes(contents):
 
     contents = contents.replace(unsafe_comparator_field, "")
 
-    unsafe_comparator = """    enum UnsafeComparator implements Comparator<byte[]> {
+    unsafe_comparator = """enum UnsafeComparator implements Comparator<byte[]> {
       INSTANCE;
 
       static final boolean BIG_ENDIAN = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
@@ -396,6 +399,7 @@ def process_UnsignedBytes(contents):
        *
        * @return a sun.misc.Unsafe
        */
+      @SuppressWarnings("removal") // b/318391980
       private static sun.misc.Unsafe getUnsafe() {
         try {
           return sun.misc.Unsafe.getUnsafe();
@@ -515,6 +519,7 @@ def process_Striped64(contents):
    *
    * @return a sun.misc.Unsafe
    */
+  @SuppressWarnings("removal") // b/318391980
   private static sun.misc.Unsafe getUnsafe() {
     try {
       return sun.misc.Unsafe.getUnsafe();
@@ -778,10 +783,11 @@ def process_contents(contents):
     return contents
 
 def process_ClosingFuture(contents):
-    finalize = """  @Override
+    finalize = """  @SuppressWarnings("removal") // b/260137033
+  @Override
   protected void finalize() {
     if (state.get().equals(OPEN)) {
-      logger.log(SEVERE, "Uh oh! An open ClosingFuture has leaked and will close: {0}", this);
+      logger.get().log(SEVERE, "Uh oh! An open ClosingFuture has leaked and will close: {0}", this);
       FluentFuture<V> unused = finishToFuture();
     }
   }"""
@@ -812,7 +818,9 @@ def process_Types(contents):
     return contents
 
 def process_Throwables(contents):
-    stack_trace_code = """  public static List<StackTraceElement> lazyStackTrace(Throwable throwable) {
+    stack_trace_code = """  @J2ktIncompatible
+  @GwtIncompatible // lazyStackTraceIsLazy, jlaStackTrace
+  public static List<StackTraceElement> lazyStackTrace(Throwable throwable) {
     return lazyStackTraceIsLazy()
         ? jlaStackTrace(throwable)
         : unmodifiableList(asList(throwable.getStackTrace()));
@@ -915,6 +923,7 @@ def process_Throwables(contents):
    * Returns the JavaLangAccess class that is present in all Sun JDKs. It is not allowed in
    * AppEngine, and not present in non-Sun JDKs.
    */
+  @SuppressWarnings("removal") // b/318391980
   @J2ktIncompatible
   @GwtIncompatible // java.lang.reflect
   @CheckForNull
@@ -974,6 +983,7 @@ def process_Throwables(contents):
     }
   }
 
+  @SuppressWarnings("removal") // b/318391980
   @J2ktIncompatible
   @GwtIncompatible // java.lang.reflect
   @CheckForNull
@@ -1033,6 +1043,7 @@ def process_FileBackedOutputStream(contents):
               return openInputStream();
             }
 
+            @SuppressWarnings("removal") // b/260137033
             @Override
             protected void finalize() {
               try {
