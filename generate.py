@@ -41,6 +41,7 @@ def process_LittleEndianByteArray(contents):
    * Unsafe.theUnsafe is inaccessible, the attempt to load the nested class fails, and the outer
    * class's static initializer can fall back on a non-Unsafe version.
    */
+  @SuppressWarnings({"SunApi", "removal"}) // b/345822163
   private enum UnsafeByteArray implements LittleEndianBytes {
     // Do *not* change the order of these constants!
     UNSAFE_LITTLE_ENDIAN {
@@ -82,7 +83,6 @@ def process_LittleEndianByteArray(contents):
      *
      * @return an Unsafe instance if successful
      */
-    @SuppressWarnings("removal") // b/318391980
     private static Unsafe getUnsafe() {
       try {
         return Unsafe.getUnsafe();
@@ -161,9 +161,9 @@ def process_AbstractFuture(contents):
    * <p>Static initialization of this class will fail if the {@link sun.misc.Unsafe} object cannot
    * be accessed.
    */
-  @SuppressWarnings({"sunapi", "removal"}) // b/318391980
+  @SuppressWarnings({"SunApi", "removal"}) // b/345822163
   private static final class UnsafeAtomicHelper extends AtomicHelper {
-    static final sun.misc.Unsafe UNSAFE;
+    static final Unsafe UNSAFE;
     static final long LISTENERS_OFFSET;
     static final long WAITERS_OFFSET;
     static final long VALUE_OFFSET;
@@ -171,18 +171,18 @@ def process_AbstractFuture(contents):
     static final long WAITER_NEXT_OFFSET;
 
     static {
-      sun.misc.Unsafe unsafe = null;
+      Unsafe unsafe = null;
       try {
-        unsafe = sun.misc.Unsafe.getUnsafe();
+        unsafe = Unsafe.getUnsafe();
       } catch (SecurityException tryReflectionInstead) {
         try {
           unsafe =
               AccessController.doPrivileged(
-                  new PrivilegedExceptionAction<sun.misc.Unsafe>() {
+                  new PrivilegedExceptionAction<Unsafe>() {
                     @Override
-                    public sun.misc.Unsafe run() throws Exception {
-                      Class<sun.misc.Unsafe> k = sun.misc.Unsafe.class;
-                      for (java.lang.reflect.Field f : k.getDeclaredFields()) {
+                    public Unsafe run() throws Exception {
+                      Class<Unsafe> k = Unsafe.class;
+                      for (Field f : k.getDeclaredFields()) {
                         f.setAccessible(true);
                         Object x = f.get(null);
                         if (k.isInstance(x)) {
@@ -219,32 +219,27 @@ def process_AbstractFuture(contents):
       UNSAFE.putObject(waiter, WAITER_NEXT_OFFSET, newValue);
     }
 
-    /** Performs a CAS operation on the {@link #waiters} field. */
     @Override
     boolean casWaiters(
         AbstractFuture<?> future, @CheckForNull Waiter expect, @CheckForNull Waiter update) {
       return UNSAFE.compareAndSwapObject(future, WAITERS_OFFSET, expect, update);
     }
 
-    /** Performs a CAS operation on the {@link #listeners} field. */
     @Override
     boolean casListeners(AbstractFuture<?> future, @CheckForNull Listener expect, Listener update) {
       return UNSAFE.compareAndSwapObject(future, LISTENERS_OFFSET, expect, update);
     }
 
-    /** Performs a GAS operation on the {@link #listeners} field. */
     @Override
     Listener gasListeners(AbstractFuture<?> future, Listener update) {
       return (Listener) UNSAFE.getAndSetObject(future, LISTENERS_OFFSET, update);
     }
 
-    /** Performs a GAS operation on the {@link #waiters} field. */
     @Override
     Waiter gasWaiters(AbstractFuture<?> future, Waiter update) {
       return (Waiter) UNSAFE.getAndSetObject(future, WAITERS_OFFSET, update);
     }
 
-    /** Performs a CAS operation on the {@link #value} field. */
     @Override
     boolean casValue(AbstractFuture<?> future, @CheckForNull Object expect, Object update) {
       return UNSAFE.compareAndSwapObject(future, VALUE_OFFSET, expect, update);
@@ -256,7 +251,7 @@ def process_AbstractFuture(contents):
 
     contents = contents.replace(unsafe_atomic_helper, "")
 
-    unsafe_atomic_helper_init = """  static {
+    unsafe_atomic_helper_init = """ static {
     AtomicHelper helper;
     Throwable thrownUnsafeFailure = null;
     Throwable thrownAtomicReferenceFieldUpdaterFailure = null;
@@ -265,12 +260,13 @@ def process_AbstractFuture(contents):
       helper = new UnsafeAtomicHelper();
     } catch (Exception | Error unsafeFailure) { // sneaky checked exception
       thrownUnsafeFailure = unsafeFailure;
-      // catch absolutely everything and fall through to our 'SafeAtomicHelper'
-      // The access control checks that ARFU does means the caller class has to be AbstractFuture
-      // instead of SafeAtomicHelper, so we annoyingly define these here
+      // catch absolutely everything and fall through to our
+      // 'AtomicReferenceFieldUpdaterAtomicHelper' The access control checks that ARFU does means
+      // the caller class has to be AbstractFuture instead of
+      // AtomicReferenceFieldUpdaterAtomicHelper, so we annoyingly define these here
       try {
         helper =
-            new SafeAtomicHelper(
+            new AtomicReferenceFieldUpdaterAtomicHelper(
                 newUpdater(Waiter.class, Thread.class, "thread"),
                 newUpdater(Waiter.class, Waiter.class, "next"),
                 newUpdater(AbstractFuture.class, Waiter.class, "waiters"),
@@ -300,18 +296,17 @@ def process_AbstractFuture(contents):
       log.get()
           .log(
               Level.SEVERE,
-              "SafeAtomicHelper is broken!",
+              "AtomicReferenceFieldUpdaterAtomicHelper is broken!",
               thrownAtomicReferenceFieldUpdaterFailure);
     }
-  }
-"""
+  }"""
     safe_atomic_helper_init = """  static {
     AtomicHelper helper;
     Throwable thrownAtomicReferenceFieldUpdaterFailure = null;
 
     try {
       helper =
-              new SafeAtomicHelper(
+              new AtomicReferenceFieldUpdaterAtomicHelper(
                       newUpdater(Waiter.class, Thread.class, "thread"),
                       newUpdater(Waiter.class, Waiter.class, "next"),
                       newUpdater(AbstractFuture.class, Waiter.class, "waiters"),
@@ -359,7 +354,9 @@ def process_UnsignedBytes(contents):
 
     contents = contents.replace(unsafe_comparator_field, "")
 
-    unsafe_comparator = """enum UnsafeComparator implements Comparator<byte[]> {
+    unsafe_comparator = """    @SuppressWarnings({"SunApi", "removal"}) // b/345822163
+    @VisibleForTesting
+    enum UnsafeComparator implements Comparator<byte[]> {
       INSTANCE;
 
       static final boolean BIG_ENDIAN = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
@@ -402,20 +399,19 @@ def process_UnsignedBytes(contents):
        *
        * @return a sun.misc.Unsafe
        */
-      @SuppressWarnings("removal") // b/318391980
-      private static sun.misc.Unsafe getUnsafe() {
+      private static Unsafe getUnsafe() {
         try {
-          return sun.misc.Unsafe.getUnsafe();
+          return Unsafe.getUnsafe();
         } catch (SecurityException e) {
           // that's okay; try reflection instead
         }
         try {
-          return java.security.AccessController.doPrivileged(
-              new java.security.PrivilegedExceptionAction<sun.misc.Unsafe>() {
+          return AccessController.doPrivileged(
+              new PrivilegedExceptionAction<Unsafe>() {
                 @Override
-                public sun.misc.Unsafe run() throws Exception {
-                  Class<sun.misc.Unsafe> k = sun.misc.Unsafe.class;
-                  for (java.lang.reflect.Field f : k.getDeclaredFields()) {
+                public Unsafe run() throws Exception {
+                  Class<Unsafe> k = Unsafe.class;
+                  for (Field f : k.getDeclaredFields()) {
                     f.setAccessible(true);
                     Object x = f.get(null);
                     if (k.isInstance(x)) {
@@ -425,12 +421,14 @@ def process_UnsignedBytes(contents):
                   throw new NoSuchFieldError("the Unsafe");
                 }
               });
-        } catch (java.security.PrivilegedActionException e) {
+        } catch (PrivilegedActionException e) {
           throw new RuntimeException("Could not initialize intrinsics", e.getCause());
         }
       }
 
       @Override
+      // Long.compareUnsigned is available under Android, which is what we really care about.
+      @SuppressWarnings("Java7ApiChecker")
       public int compare(byte[] left, byte[] right) {
         int stride = 8;
         int minLength = Math.min(left.length, right.length);
@@ -446,7 +444,7 @@ def process_UnsignedBytes(contents):
           long rw = theUnsafe.getLong(right, BYTE_ARRAY_BASE_OFFSET + (long) i);
           if (lw != rw) {
             if (BIG_ENDIAN) {
-              return UnsignedLongs.compare(lw, rw);
+              return Long.compareUnsigned(lw, rw);
             }
 
             /*
@@ -522,19 +520,18 @@ def process_Striped64(contents):
    *
    * @return a sun.misc.Unsafe
    */
-  @SuppressWarnings("removal") // b/318391980
-  private static sun.misc.Unsafe getUnsafe() {
+  private static Unsafe getUnsafe() {
     try {
-      return sun.misc.Unsafe.getUnsafe();
+      return Unsafe.getUnsafe();
     } catch (SecurityException tryReflectionInstead) {
     }
     try {
-      return java.security.AccessController.doPrivileged(
-          new java.security.PrivilegedExceptionAction<sun.misc.Unsafe>() {
+      return AccessController.doPrivileged(
+          new PrivilegedExceptionAction<Unsafe>() {
             @Override
-            public sun.misc.Unsafe run() throws Exception {
-              Class<sun.misc.Unsafe> k = sun.misc.Unsafe.class;
-              for (java.lang.reflect.Field f : k.getDeclaredFields()) {
+            public Unsafe run() throws Exception {
+              Class<Unsafe> k = Unsafe.class;
+              for (Field f : k.getDeclaredFields()) {
                 f.setAccessible(true);
                 Object x = f.get(null);
                 if (k.isInstance(x)) return k.cast(x);
@@ -542,7 +539,7 @@ def process_Striped64(contents):
               throw new NoSuchFieldError("the Unsafe");
             }
           });
-    } catch (java.security.PrivilegedActionException e) {
+    } catch (PrivilegedActionException e) {
       throw new RuntimeException("Could not initialize intrinsics", e.getCause());
     }
   }"""
@@ -553,7 +550,7 @@ def process_Striped64(contents):
     contents = contents.replace(unsafe_code, "")
 
     unsafe_init = """  // Unsafe mechanics
-  private static final sun.misc.Unsafe UNSAFE;
+  private static final Unsafe UNSAFE;
   private static final long baseOffset;
   private static final long busyOffset;
 
@@ -623,7 +620,14 @@ import java.util.Random;\n""")
 
     contents = contents.replace(unsafe_cas, safe_cas)
 
-    unsafe_cell = """  static final class Cell {
+    unsafe_cell = """  /**
+   * Padded variant of AtomicLong supporting only raw accesses plus CAS. The value field is placed
+   * between pads, hoping that the JVM doesn't reorder them.
+   *
+   * <p>JVM intrinsics note: It would be possible to use a release-only form of CAS here, if it were
+   * provided.
+   */
+  static final class Cell {
     volatile long p0, p1, p2, p3, p4, p5, p6;
     volatile long value;
     volatile long q0, q1, q2, q3, q4, q5, q6;
@@ -637,7 +641,7 @@ import java.util.Random;\n""")
     }
 
     // Unsafe mechanics
-    private static final sun.misc.Unsafe UNSAFE;
+    private static final Unsafe UNSAFE;
     private static final long valueOffset;
 
     static {
@@ -721,6 +725,7 @@ def process_contents(contents):
     contents = re.sub(r'@\s*VisibleForTesting\s*(\([^)]*\)|)', '', contents)
     contents = re.sub(r'@\s*Beta\s*(\([^)]*\)|)', '', contents)
     contents = re.sub(r'@\s*J2ObjCIncompatible\s*(\([^)]*\)|)', '', contents)
+    contents = re.sub(r'@\s*RetainedLocalRef\s*(\([^)]*\)|)', '', contents)
     contents = re.sub(r'@\s*WeakOuter\s*(\([^)]*\)|)', '', contents)
     contents = re.sub(r'@\s*Weak\s*(\([^)]*\)|)', '', contents)
     contents = re.sub(r'@\s*RetainedWith\s*(\([^)]*\)|)', '', contents)
@@ -749,6 +754,10 @@ def process_contents(contents):
     )
     contents = contents.replace(
         "\nimport com.google.j2objc.annotations.J2ObjCIncompatible;",
+        ""
+    )
+    contents = contents.replace(
+        "\nimport com.google.j2objc.annotations.RetainedLocalRef;",
         ""
     )
     contents = contents.replace(
@@ -786,7 +795,7 @@ def process_contents(contents):
     return contents
 
 def process_ClosingFuture(contents):
-    finalize = """  @SuppressWarnings("removal") // b/260137033
+    finalize = """  @SuppressWarnings({"removal", "Finalize"}) // b/260137033
   @Override
   protected void finalize() {
     if (state.get().equals(OPEN)) {
@@ -1030,7 +1039,16 @@ def process_Throwables(contents):
     return contents
 
 def process_FileBackedOutputStream(contents):
-    finalize_constructor = """  public FileBackedOutputStream(int fileThreshold, boolean resetOnFinalize) {
+    finalize_constructor = """  /**
+   * Creates a new instance that uses the given file threshold, and optionally resets the data when
+   * the {@link ByteSource} returned by {@link #asByteSource} is finalized.
+   *
+   * @param fileThreshold the number of bytes before the stream should switch to buffering to a file
+   * @param resetOnFinalize if true, the {@link #reset} method will be called when the {@link
+   *     ByteSource} returned by {@link #asByteSource} is finalized.
+   * @throws IllegalArgumentException if {@code fileThreshold} is negative
+   */
+  public FileBackedOutputStream(int fileThreshold, boolean resetOnFinalize) {
     checkArgument(
         fileThreshold >= 0, "fileThreshold must be non-negative, but was %s", fileThreshold);
     this.fileThreshold = fileThreshold;
@@ -1046,7 +1064,7 @@ def process_FileBackedOutputStream(contents):
               return openInputStream();
             }
 
-            @SuppressWarnings("removal") // b/260137033
+            @SuppressWarnings({"removal", "Finalize"}) // b/260137033
             @Override
             protected void finalize() {
               try {
